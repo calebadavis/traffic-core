@@ -172,6 +172,13 @@ public class Board {
 
     }
     
+    /**
+     * Recommended constructor, reads config file from .jar, or just creates an
+     * empty board (based on the 'useDefault' parameter)
+     * 
+     * @param useDefault indicates if the board should be initialized from the
+     * default config file in the .jar file
+     */
     public Board(boolean useDefault) {
     	this();
     	if (useDefault) {
@@ -298,7 +305,6 @@ public class Board {
                 break;
             }
 
-            
             // look at each row occupied by the piece
             for (int iRow = pTop; iRow < pTop + pHeight; ++iRow) {
                 // Check that the new spot to be occupied is clear
@@ -316,6 +322,8 @@ public class Board {
                     aBoard[iRow][iCol] = pType.getId();                        
                 }
             }
+            
+            // update the state of the piece to its new location
             p.setLeftPos(pLeft - 1);
             break;
 
@@ -345,6 +353,8 @@ public class Board {
                     aBoard[iRow][iCol] = pType.getId();
                 }
             }
+
+            // update the state of the piece to its new location
             p.setLeftPos(pLeft + 1);
             break;
 
@@ -373,6 +383,8 @@ public class Board {
                     aBoard[iRow][iCol] = pType.getId();
                 }
             }
+            
+            // update the state of the piece to its new location
             p.setTopPos(pTop - 1);
             break;
 
@@ -402,6 +414,8 @@ public class Board {
                     aBoard[iRow][iCol] = pType.getId();
                 }
             }
+
+            // update the state of the piece to its new location            
             p.setTopPos(pTop + 1);
                 
             break;
@@ -584,6 +598,13 @@ public class Board {
             // check if the move resulted in a solved configuration
             locs = pieceLocs();
             if (matches(locs, solution)) {
+            	
+            	// a match means we're almost done...
+            	// but the state of the board AFTER the final move still isn't
+            	// in the tree of moves (MoveNode only stores the state PRIOR
+            	// to making the move). So we construct a dummy node
+            	// representing this final configuration, and stick it on the
+            	// bottom of the solved branch of the tree
                 next = new MoveNode(next, null, MoveDir.NONE, locs);
                 return next;
             }
@@ -616,7 +637,7 @@ public class Board {
     public int[] pieceLocs() {
         
         // Create a flattened array to represent the board
-        int[] ret = new int[height * width];
+        int[] ret = new int[getHeight() * getWidth()];
         
         // Initialize the board to unoccupied
         Arrays.fill(ret, -1);
@@ -677,7 +698,21 @@ public class Board {
     
     /**
      * Determine if a board layout (as provided by {@link #pieceLocs()})
-     * matches the Board solution (see {@link TrafficUI#solvedBoard})
+     * matches the Board solution (see {@link TrafficUI#solvedBoard})<br/>
+     * <br/>
+     * This logic is necessary because the solved configuration doesn't specify
+     * the exact location of each piece - the solved layout simply dictates
+     * that any piece of a particular type must be in a specific position.<br/>
+     * <br/>
+     * An example: consider a 3x3 board, with only two pieces on it, each 1x1. 
+     * Those two pieces would have id 0 and 1 respectively. If the solved 
+     * layout dictates that a 1x1 is at the bottom left corner (0,2) and at the
+     * bottom right corner (2,2), this solved layout could be matched by two 
+     * different boards - one where piece 0 is at the bottom left, and piece 1
+     * is at the bottom right, and a second layout where piece 1 is at the 
+     * bottom left, and piece 0 is at the bottom right. This method would
+     * correctly identify each layout as matching.
+     * 
      * @param pids a board layout (as provided by {@link #pieceLocs()})
      * @param types a solved layout of type ids (see {@link TrafficUI#solvedBoard})
      * @return true if the provided pids array matches the types solution array
@@ -752,7 +787,7 @@ public class Board {
      * @param p        The piece to test
      * @param leftPos  The column occupied by the left edge of the piece
      * @param topPos   The row occupied by the top edge of the piece
-     * @return         true if the board fits, false if it doesn't
+     * @return         true if the piece fits, false if it doesn't
      */
     private boolean _doesFit(Piece p, int leftPos, int topPos) {
         // Check if the piece would be off the bounds of the board
@@ -810,14 +845,14 @@ public class Board {
     
     /**
      * Helper method to retrieve the next possible moves from the current
-     * board. To minimize computation time, assumes the user has previously
+     * board. To minimize computation time, assumes the caller has previously
      * called {@link #pieceLocs()}, passing the returned array as parameter 
      * pieceLocs[]
      * 
      * @param mn        the {@link #MoveNode} which resulted in the current board
      * @param pieceLocs the array of piece locations describing this board
-     * @return          a LinkedList of {@link #MoveNode} objects, representing the 
-     * set of possible moves available from this board configuration
+     * @return          a Linked list of {@link #MoveNode} objects, representing
+     * all possible moves available from this board configuration
      */
     private List<MoveNode> _getNextMoves(MoveNode mn, int pieceLocs[]) {
         
