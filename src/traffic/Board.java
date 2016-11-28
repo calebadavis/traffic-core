@@ -1,6 +1,8 @@
 package traffic;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,20 +59,15 @@ public class Board {
     private int solvedBoard[] = null;
     
     /**
-     * Construct a new Board instance, reading configuration from a file
-     * @param cfgFName the configuration file for the new Board
+     * Initialize the types, pieces, configuration, and solved configuration
+     * from a reader (so config data can be located in either a file or in a
+     * .jar resource)
+     * 
+     * @param reader source of config lines
      */
-    public Board(String cfgFName) {
-        
-        // Create an (incomplete) board object
-        this();
-        
-        // Read the file
-        Path path = Paths.get(cfgFName);
-        BufferedReader reader = null;
+    private void init(BufferedReader reader) {
         try {
-            reader = Files.newBufferedReader(path, Charset.forName("UTF-8"));
-
+        	
             // State variables for tokenizing and parsing the config file
             String line = null;
             char c;
@@ -103,7 +100,7 @@ public class Board {
                     // If we have both height and width, initialize a complete
                     // (albeit empty) board
                     if (height != -1 && width != -1) 
-                        init(height, width);
+                        initDimensions(height, width);
                     break;
 
                 // 'T' means a new PieceType
@@ -143,7 +140,7 @@ public class Board {
                 }
             }
         } catch (IOException iox) {
-            System.err.println("Error while reading from config file " + cfgFName);
+            System.err.println("Error while reading from config");
         } finally {
             try {
                 reader.close();
@@ -152,6 +149,38 @@ public class Board {
             }
         }
 
+    }
+    
+    /**
+     * Construct a new Board instance, reading configuration from a file
+     * @param cfgFName the configuration file for the new Board
+     */
+    public Board(String cfgFName) {
+        
+        this();
+        
+        // Read the file
+        Path path = Paths.get(cfgFName);
+        BufferedReader reader = null;
+        try {
+            reader = Files.newBufferedReader(path, Charset.forName("UTF-8"));
+        } catch (IOException ioe) {
+        	System.err.println("Problem reading from file: " + cfgFName);
+        }
+
+        init(reader);
+
+    }
+    
+    public Board(boolean useDefault) {
+    	this();
+    	if (useDefault) {
+    		InputStream is = Board.class.getClassLoader().getResourceAsStream(
+    				"config");
+    		InputStreamReader isr = new InputStreamReader(is);
+    		BufferedReader reader = new BufferedReader(isr);
+    		init(reader);
+    	}
     }
     
     /**
@@ -171,7 +200,7 @@ public class Board {
 	 * @param width    The width (in squares) of the Board
 	 */
 	public Board(int height, int width) {
-	    init(height, width);
+	    initDimensions(height, width);
     }
     	
 	/**
@@ -179,7 +208,7 @@ public class Board {
 	 * @param height
 	 * @param width
 	 */
-	private void init(int height, int width) {
+	private void initDimensions(int height, int width) {
 
 	    // Store dimensions
         this.height = height;
