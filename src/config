@@ -1,9 +1,28 @@
+# Config file for Traffic Jam puzzle
+#
+# The file contains directive lines that start with 'W', 'H', 'T', 'P', or 'S'
+# Any other starting character causes the line to be ignored
+# After the first character (which indicates the type of the directive), there
+# must be one or more ':' characters, between which are integer strings
+# The directives should be as follows: 
+# 
+# The file must start with 'W' and 'H' as the first two lines 
+# 'W' means board width, and 'H' means board height
 W:4
 H:5
+#
+# 'T' means PieceType - it requires three fields: ID, width, and height
+# Successive PieceType declarations must have sequential IDs, starting at 0
+# So a line 'T:0:2:1' defines a PieceType with ID 0, width 2, height 1
 T:0:2:1
 T:1:1:2
 T:2:1:1
 T:3:2:2
+#
+# 'P' means a new Piece on the board - it requires an existing PieceType ID,
+# a left position, and a top position. A PieceType must be declared prior to 
+# a Piece being declared of that PieceType's ID
+# So a line 'P:0:1:0' defines a Piece with PieceType ID 0, at column 1, row 0
 P:0:1:0
 P:1:0:1
 P:1:0:3
@@ -14,6 +33,9 @@ P:2:1:2
 P:2:2:1
 P:2:2:2
 P:3:1:3
+#
+# 'S' means a Piece location for the 'solved' board
+# The format is the same as 'P' lines - PieceType ID: left pos: top pos
 S:3:1:0
 S:2:0:1
 S:2:3:1
